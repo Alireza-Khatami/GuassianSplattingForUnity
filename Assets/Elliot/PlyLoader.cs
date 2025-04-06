@@ -58,6 +58,11 @@ public class PlyLoader : MonoBehaviour
         reader.BaseStream.Position = readPos;
         var binaryReader = new BinaryReader(file);
 
+        if (numVertices > 2000)
+        {
+            numVertices = 2000;
+        }
+
         for (int i = 0; i < numVertices; i++)
         {
             Vector3 point = new();
@@ -73,11 +78,11 @@ public class PlyLoader : MonoBehaviour
                         break;
                     case "z": point.z = val;
                         break;
-                    case "f_dc_0": color.r = (byte)val;
+                    case "f_dc_0": color.r = (byte)((int)((val/4 + 0.5f)*255));
                         break;
-                    case "f_dc_1": color.g = (byte)val;
+                    case "f_dc_1": color.g = (byte)((int)((val / 4 + 0.5f) * 255));
                         break;
-                    case "f_dc_2": color.b = (byte)val;
+                    case "f_dc_2": color.b = (byte)((int)((val / 4 + 0.5f) * 255));
                         break;
                     case "opacity": color.a = (byte)val;
                         break;

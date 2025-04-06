@@ -17,7 +17,7 @@ public class PointCloudRenderer : MonoBehaviour
         pointCloudLoader.Load();
         vertBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, pointCloudLoader.points.Count, sizeof(float)*3);
         vertBuffer.SetData(pointCloudLoader.points);
-        colorBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, pointCloudLoader.points.Count, sizeof(float)*3);
+        colorBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, pointCloudLoader.points.Count, sizeof(float)*4);
         colorBuffer.SetData(pointCloudLoader.colors);
     }
 
@@ -32,7 +32,7 @@ public class PointCloudRenderer : MonoBehaviour
         rp.matProps.SetInt("_BaseVertexIndex", 0);
         rp.matProps.SetInt("_BaseColorIndex", 0);
         rp.matProps.SetMatrix("_ObjectToWorld", Matrix4x4.Translate(new Vector3(4.5f, 0, 0)));
-        rp.matProps.SetFloat("_NumInstances", pointCloudLoader.points.Count);
-        Graphics.RenderPrimitives(rp, MeshTopology.Triangles, pointCloudLoader.points.Count, 1);
+        //rp.matProps.SetFloat("_NumInstances", pointCloudLoader.points.Count);
+        Graphics.RenderPrimitives(rp, MeshTopology.Points, pointCloudLoader.points.Count, 1);
     }
 }

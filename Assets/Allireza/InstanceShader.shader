@@ -24,6 +24,7 @@ Shader "Custom/InstanceShader"
             };
 
             StructuredBuffer<InstanceData> _InstanceBuffer;
+            uniform uint _BaseIndex;
 
             struct appdata
             {
@@ -66,7 +67,7 @@ Shader "Custom/InstanceShader"
 
             v2f vert(appdata v)
             {
-                InstanceData d = _InstanceBuffer[v.instanceID];
+                InstanceData d = _InstanceBuffer[v.instanceID + _BaseIndex];
 
                 float4x4 rot = RotationMatrix(d.rotation);
                 float4 local = float4(v.vertex * d.scale, 1.0);

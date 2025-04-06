@@ -27,10 +27,19 @@ public class RenderPly : MonoBehaviour
     {
         if (instanceBuffer != null && instanceCount > 0)
         {
-            Graphics.DrawMeshInstancedProcedural(
-                instanceMesh, 0, instanceMaterial,
-                new Bounds(Vector3.zero, Vector3.one * 10000),
-                instanceCount);
+            int increment = 50000;
+            for (int i = 0; i < instanceCount; i += increment)
+            {
+                //instanceMaterial.SetInteger("_BaseIndex", i);
+                var matProps = new MaterialPropertyBlock();
+                matProps.SetInt("_BaseIndex", i);
+
+                Graphics.DrawMeshInstancedProcedural(
+                    instanceMesh, 0, instanceMaterial,
+                    new Bounds(Vector3.zero, Vector3.one * 10000),
+                    (instanceCount - i < increment) ? instanceCount - i : increment,
+                    matProps);
+            }
         }
         else
         {

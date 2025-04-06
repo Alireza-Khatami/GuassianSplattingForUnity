@@ -12,7 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b65e260f4bd220d4491434c6f60e93e1, type: 3}
   m_Name: PlyDataContainer
   m_EditorClassIdentifier: 
-  plyFilePath: Assets/Allireza/AKLoveJack.ply
-  instanceMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
-  maxInstances: 2000
-  instanceMaterial: {fileID: 2100000, guid: 1d03f955eedb89d488eac40ae2a0c4ef, type: 2}
+  plyFilePath: C:\Users\ellio\Documents\ComputerGraphics\LoveJack.ply
