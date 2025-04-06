@@ -9,6 +9,7 @@ Shader "Custom/InstanceShader"
         Tags { "RenderType"="Opaque" }
         Pass
         {
+            Cull Off //  Disables backface culling
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -60,18 +61,69 @@ Shader "Custom/InstanceShader"
                     pos.x * c - pos.y * s,
                     pos.x * s + pos.y * c
                 );
-}
+            }
+
+            // Returns column vectors of the rotation matrix from a quaternion
+            void QuaternionToBasis(float4 q, out float3 X, out float3 Y, out float3 Z)
+            {
+                float x = q.x, y = q.y, z = q.z, w = q.w;
+
+                float x2 = x + x, y2 = y + y, z2 = z + z;
+
+                float xx = x * x2;
+                float yy = y * y2;
+                float zz = z * z2;
+                float xy = x * y2;
+                float xz = x * z2;
+                float yz = y * z2;
+                float wx = w * x2;
+                float wy = w * y2;
+                float wz = w * z2;
+
+                X = float3(1.0 - (yy + zz), xy + wz, xz - wy);
+                Y = float3(xy - wz, 1.0 - (xx + zz), yz + wx);
+                Z = float3(xz + wy, yz - wx, 1.0 - (xx + yy));
+            }
+
+            float3 TransformWorldToViewDir(float3 dir)
+            {
+                return mul((float3x3)UNITY_MATRIX_V, dir);
+            }
+
+            void SelectAxes(float3 X, float3 Y, float3 Z, out float3 x, out float3 y)
+            {
+                float3 viewX = TransformWorldToViewDir(X);
+                float3 viewY = TransformWorldToViewDir(Y);
+                float3 viewZ = TransformWorldToViewDir(Z);
+
+                float areaXY = abs(viewX.x * viewY.y - viewX.y * viewY.x);
+                float areaYZ = abs(viewY.x * viewZ.y - viewY.y * viewZ.x);
+                float areaXZ = abs(viewX.x * viewZ.y - viewX.y * viewZ.x);	
+
+                float xyMask = step(areaYZ, areaXY) * step(areaXZ, areaXY);
+                float yzMask = step(areaXY, areaYZ) * step(areaXZ, areaYZ);
+                float xzMask = step(areaXY, areaXZ) * step(areaYZ, areaXZ);
+
+                x = xyMask * X + yzMask * Y + xzMask * X;
+                y = xyMask * Y + yzMask * Z + xzMask * Z;
+            }
+
             v2f vert(appdata v)
             {
                 InstanceData d = _InstanceBuffer[v.instanceID + _BaseIndex];
-                // float2 rotated = Rotate2D(v.vertex.xy, d.rotation.w);
-                float2 rotated = ApplyQuaternionTo2D(v.vertex.xy, d.rotation);
-                rotated.y *= -1.0;
-                rotated *= d.scale.xy;
-                float3 right = UNITY_MATRIX_IT_MV[0].xyz;
-                float3 up = -UNITY_MATRIX_IT_MV[1].xyz;
-                // Final world position
-                float3 worldPos = d.position + rotated.x * right + rotated.y * up;
+
+                // Step 1: convert quaternion to basis
+                float3 X, Y, Z;
+                QuaternionToBasis(d.rotation, X, Y, Z);
+
+                // Step 2: select optimal facing axes
+                float3 axis1, axis2;
+                SelectAxes(X, Y, Z, axis1, axis2);
+
+                // Step 3: apply non-uniform scale and vertex projection
+                float2 vtx = v.vertex.xy; // quad assumed in XY
+                float3 offset = vtx.x * axis1 * d.scale.x + vtx.y * axis2 * d.scale.y;
+                float3 worldPos = d.position + offset;
                 v2f o;
                 o.vertex = UnityObjectToClipPos(float4(worldPos, 1.0));
                 o.uv = v.uv;
@@ -81,19 +133,17 @@ Shader "Custom/InstanceShader"
 
             sampler2D _MainTex;
 
-            // fixed4 frag(v2f i) : SV_Target
-            // {
-            //     return tex2D(_MainTex, i.uv) * i.color;
-            // }
+
             fixed4 frag(v2f i) : SV_Target
             {
                 float2 centerUV = i.uv - 0.5;
                 float distSq = dot(centerUV, centerUV);
-                float gaussian = exp(-distSq * 1.0f);// adjust falloff sharpness here
+                float gaussian = exp(-distSq );//*25.0f);// adjust falloff sharpness here
 
                 fixed4 texColor = tex2D(_MainTex, i.uv);
-                texColor.a *= gaussian;
-                texColor *= i.color;
+                fixed3 linearColor = GammaToLinearSpace(texColor);
+                i.color.a *= gaussian;
+                texColor = fixed4(linearColor,1) * i.color;
                 //clip(texColor.a); optional: discard very transparent pixels
                 return texColor;
             }
@@ -102,6 +152,23 @@ Shader "Custom/InstanceShader"
         }
     }
 }
+
+ /* old way of always facing the camera{
+    InstanceData d = _InstanceBuffer[v.instanceID + _BaseIndex];
+    // float2 rotated = Rotate2D(v.vertex.xy, d.rotation.w);
+    float2 rotated = ApplyQuaternionTo2D(v.vertex.xy, d.rotation);
+    rotated.y *= -1.0;
+    rotated *= d.scale.xy;
+    float3 right = UNITY_MATRIX_IT_MV[0].xyz;
+    float3 up = -UNITY_MATRIX_IT_MV[1].xyz;
+    // Final world position
+    float3 worldPos = d.position + rotated.x * right + rotated.y * up;
+    }*/
+//original fragment
+// fixed4 frag(v2f i) : SV_Target
+// {
+//     return tex2D(_MainTex, i.uv) * i.color;
+// }
 
 // Shader "Custom/InstanceShader"
 // {
