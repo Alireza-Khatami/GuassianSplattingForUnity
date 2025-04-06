@@ -41,7 +41,7 @@ public class AKPyloader : ScriptableObject
     public  InstaneData parsePlyFileToInstance( SlimPlyData record)
     {
         InstaneData data = new InstaneData();
-        data.position = new Vector3(record.x,record.y, record.z);
+        data.position = new Vector3(record.x,-record.y, record.z);
         data.scale = new Vector3(record.scale_0/100, record.scale_1/100, record.scale_2/100);
         data.rotation = new Quaternion(record.rot_0, record.rot_1, record.rot_2, record.rot_3);
         data.color = new Color((record.f_dc_0 / 4 + 0.5f), (record.f_dc_1 / 4 + 0.5f), (record.f_dc_2 / 4 + 0.5f), record.opacity);

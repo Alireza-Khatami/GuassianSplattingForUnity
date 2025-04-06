@@ -12,4 +12,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b65e260f4bd220d4491434c6f60e93e1, type: 3}
   m_Name: PlyDataContainer
   m_EditorClassIdentifier: 
-  plyFilePath: C:\Users\ellio\Documents\ComputerGraphics\LoveJack.ply
+  plyFilePath: Assets/AKLoveJack.ply
