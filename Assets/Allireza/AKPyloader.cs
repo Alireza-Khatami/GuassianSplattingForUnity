@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Linq;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewMyData", menuName = "MyGame/MyData")]
@@ -37,6 +38,8 @@ public class AKPyloader : ScriptableObject
             InstaneData data = parsePlyFileToInstance(record);
             instances.Add(data);
         }
+
+        instances = instances.OrderBy(i => i.position.x).ToList();
     }
     public  InstaneData parsePlyFileToInstance( SlimPlyData record)
     {

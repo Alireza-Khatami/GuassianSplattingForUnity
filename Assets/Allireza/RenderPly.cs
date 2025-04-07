@@ -27,7 +27,7 @@ public class RenderPly : MonoBehaviour
     {
         if (instanceBuffer != null && instanceCount > 0)
         {
-            int increment = 50000;
+            int increment = 3000000;
             for (int i = 0; i < instanceCount; i += increment)
             {
                 //instanceMaterial.SetInteger("_BaseIndex", i);

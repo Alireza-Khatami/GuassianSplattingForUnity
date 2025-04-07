@@ -6,7 +6,11 @@ Shader "Custom/InstanceShader"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Transparent" }
+        Blend SrcAlpha OneMinusSrcAlpha
+        ZWrite Off
+        ZTest Always
+        // Blend OneMinusDstAlpha One
         Pass
         {
             Cull Off //  Disables backface culling
@@ -136,14 +140,17 @@ Shader "Custom/InstanceShader"
 
             fixed4 frag(v2f i) : SV_Target
             {
-                float2 centerUV = i.uv - 0.5;
+                float2 centerUV = (i.uv - 0.5) * 1.2f;
                 float distSq = dot(centerUV, centerUV);
-                float gaussian = exp(-distSq );//*25.0f);// adjust falloff sharpness here
+                float gaussian = exp(-distSq * 25.0f);// adjust falloff sharpness here
 
-                fixed4 texColor = tex2D(_MainTex, i.uv);
-                fixed3 linearColor = GammaToLinearSpace(texColor);
-                i.color.a *= gaussian;
-                texColor = fixed4(linearColor,1) * i.color;
+                // fixed4 texColor = tex2D(_MainTex, i.uv);
+                fixed4 texColor = i.color;
+                texColor.a = 1.0f;
+                // fixed3 linearColor = GammaToLinearSpace(texColor);
+                // i.color.a *= gaussian;
+                // texColor = fixed4(linearColor,1) * i.color;
+                texColor.a = gaussian;
                 //clip(texColor.a); optional: discard very transparent pixels
                 return texColor;
             }
