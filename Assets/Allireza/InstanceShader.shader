@@ -6,139 +6,58 @@ Shader "Custom/InstanceShader"
     }
     SubShader
     {
-        Tags { "RenderType"="Transparent" }
-        Blend SrcAlpha OneMinusSrcAlpha
-        ZWrite Off
-        ZTest Always
-        // Blend OneMinusDstAlpha One
+        Tags { "RenderType"="Opaque" }
+
+        // Pass 1: Depth Prepass (writes depth only)
         Pass
         {
-            Cull Off //  Disables backface culling
+            Name "DepthPrepass"
+            ZWrite On
+             ColorMask 0  // Don't write color
+            Cull Off
             CGPROGRAM
-            #pragma vertex vert
+            #pragma vertex vertDepth
+            #pragma fragment fragDepthOnly
+            #pragma multi_compile_instancing
+            #include "/InstanceSplatCommon.cginc"
+             float4 fragDepthOnly(v2fDepth i) : SV_Target
+            {
+                discard;
+                return 0;
+            }
+            ENDCG
+        }
+        Pass
+        {
+
+            Name "TransparentPass"
+            ZWrite Off
+            ZTest LEqual
+            Blend SrcAlpha OneMinusSrcAlpha
+            CGPROGRAM
+            #pragma vertex vertColor
             #pragma fragment frag
             #pragma multi_compile_instancing
-            #include "UnityCG.cginc"
-
-            struct InstanceData
-            {
-                float3 position;
-                float3 scale;
-                float4 rotation; // quaternion (we'll use .w as Z-rotation)
-                float4 color;
-            };
-
-            StructuredBuffer<InstanceData> _InstanceBuffer;
-            uniform uint _BaseIndex;
-
-            struct appdata
-            {
-                float3 vertex : POSITION;  // Unity quad in XY plane: (-0.5 to 0.5, -0.5 to 0.5)
-                float2 uv : TEXCOORD0;
-                uint instanceID : SV_InstanceID;
-            };
-
-            struct v2f
-            {
-                float2 uv : TEXCOORD0;
-                float4 vertex : SV_POSITION;
-                float4 color : COLOR;
-            };
-
-            float2 Rotate2D(float2 pos, float angle)
-            {
-                float s = sin(angle);
-                float c = cos(angle);
-                return float2(
-                    pos.x * c - pos.y * s,
-                    pos.x * s + pos.y * c
-                );
-            }
-            float2 ApplyQuaternionTo2D(float2 pos, float4 q)
-            {
-                // Convert quaternion rotation to 2D (around Z) using imaginary i & j parts
-                // Using standard 2D quaternion rotation formula
-                float angle = atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z));
-                float s = sin(angle);
-                float c = cos(angle);
-                return float2(
-                    pos.x * c - pos.y * s,
-                    pos.x * s + pos.y * c
-                );
-            }
-
-            // Returns column vectors of the rotation matrix from a quaternion
-            void QuaternionToBasis(float4 q, out float3 X, out float3 Y, out float3 Z)
-            {
-                float x = q.x, y = q.y, z = q.z, w = q.w;
-
-                float x2 = x + x, y2 = y + y, z2 = z + z;
-
-                float xx = x * x2;
-                float yy = y * y2;
-                float zz = z * z2;
-                float xy = x * y2;
-                float xz = x * z2;
-                float yz = y * z2;
-                float wx = w * x2;
-                float wy = w * y2;
-                float wz = w * z2;
-
-                X = float3(1.0 - (yy + zz), xy + wz, xz - wy);
-                Y = float3(xy - wz, 1.0 - (xx + zz), yz + wx);
-                Z = float3(xz + wy, yz - wx, 1.0 - (xx + yy));
-            }
-
-            float3 TransformWorldToViewDir(float3 dir)
-            {
-                return mul((float3x3)UNITY_MATRIX_V, dir);
-            }
-
-            void SelectAxes(float3 X, float3 Y, float3 Z, out float3 x, out float3 y)
-            {
-                float3 viewX = TransformWorldToViewDir(X);
-                float3 viewY = TransformWorldToViewDir(Y);
-                float3 viewZ = TransformWorldToViewDir(Z);
-
-                float areaXY = abs(viewX.x * viewY.y - viewX.y * viewY.x);
-                float areaYZ = abs(viewY.x * viewZ.y - viewY.y * viewZ.x);
-                float areaXZ = abs(viewX.x * viewZ.y - viewX.y * viewZ.x);	
-
-                float xyMask = step(areaYZ, areaXY) * step(areaXZ, areaXY);
-                float yzMask = step(areaXY, areaYZ) * step(areaXZ, areaYZ);
-                float xzMask = step(areaXY, areaXZ) * step(areaYZ, areaXZ);
-
-                x = xyMask * X + yzMask * Y + xzMask * X;
-                y = xyMask * Y + yzMask * Z + xzMask * Z;
-            }
-
-            v2f vert(appdata v)
-            {
-                InstanceData d = _InstanceBuffer[v.instanceID + _BaseIndex];
-
-                // Step 1: convert quaternion to basis
-                float3 X, Y, Z;
-                QuaternionToBasis(d.rotation, X, Y, Z);
-
-                // Step 2: select optimal facing axes
-                float3 axis1, axis2;
-                SelectAxes(X, Y, Z, axis1, axis2);
-
-                // Step 3: apply non-uniform scale and vertex projection
-                float2 vtx = v.vertex.xy; // quad assumed in XY
-                float3 offset = vtx.x * axis1 * d.scale.x + vtx.y * axis2 * d.scale.y;
-                float3 worldPos = d.position + offset;
-                v2f o;
-                o.vertex = UnityObjectToClipPos(float4(worldPos, 1.0));
-                o.uv = v.uv;
-                o.color = d.color;
-                return o;
-            }
-
+            #include "/InstanceSplatCommon.cginc"
             sampler2D _MainTex;
+            fixed4 frag(v2fColor i) : SV_Target
+            {
+                float2 centerUV = (i.uv - 0.5) * 1.2f;
+                float distSq = dot(centerUV, centerUV);
+                float gaussian = exp(-distSq * 25.0f);
 
+                fixed4 texColor = i.color;
+                texColor.a = gaussian;
 
-            fixed4 frag(v2f i) : SV_Target
+                clip(texColor.a - 0.01);
+                return texColor;
+            }
+            ENDCG
+        }
+    }
+}
+
+   /*         fixed4 frag(v2f i) : SV_Target
             {
                 float2 centerUV = (i.uv - 0.5) * 1.2f;
                 float distSq = dot(centerUV, centerUV);
@@ -155,10 +74,7 @@ Shader "Custom/InstanceShader"
                 return texColor;
             }
 
-            ENDCG
-        }
-    }
-}
+            ENDCG*/
 
  /* old way of always facing the camera{
     InstanceData d = _InstanceBuffer[v.instanceID + _BaseIndex];
