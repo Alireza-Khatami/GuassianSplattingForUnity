@@ -3574,6 +3574,9 @@ VisualEffect:
       - m_Value: 1
         m_Name: Wing Animation Speed
         m_Overridden: 1
+      - m_Value: 2
+        m_Name: Particle size
+        m_Overridden: 1
     m_Vector2f:
       m_Array: []
     m_Vector3f:
@@ -9329,7 +9332,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cc4d76f733087744991913c9d19d5274, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_LensFlareData: {fileID: 11400000, guid: 632ff411dbbf5d54593d6e684940a2bf, type: 2}
+  m_LensFlareData: {fileID: 11400000, guid: bd7eaf3bd49c39f4cb77bd809459aa72, type: 2}
   version: 0
   intensity: 1
   maxAttenuationDistance: 100

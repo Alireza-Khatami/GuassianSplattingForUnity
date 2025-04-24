@@ -16,6 +16,8 @@ public class AKPyloader : MonoBehaviour
     public List<InstaneData> instances;
     private  int instanceCount  = 2000;
 
+    private static float SPH_0 = 0.2820948f;
+
     public void LoadAndCreateBuffer()
     {
         instances = new List<InstaneData>(instanceCount);
@@ -45,15 +47,13 @@ public class AKPyloader : MonoBehaviour
     {
         InstaneData data = new InstaneData();
         data.position = new Vector3(record.x,-record.y, record.z);
-        data.scale = new Vector3(record.scale_0/20, record.scale_1/20, record.scale_2/20);
-        // var rotation = new Quaternion(-(record.rot_1-128f)/128f, -(record.rot_2-128f)/128f, (record.rot_3-128f)/128f, (record.rot_0-128f)/128f);
+        data.scale = new Vector3(Mathf.Exp(record.scale_0), Mathf.Exp(record.scale_1), Mathf.Exp(record.scale_2));
         var rotation = new Quaternion(record.rot_1, record.rot_2, record.rot_3, record.rot_0);
-        //rotation.ToAngleAxis(out float angle, out Vector3 axis);
-        //data.rotation = rotation.eulerAngles;
-        data.axisX = rotation * new Vector3(record.scale_0/10, 0f, 0f);
-        data.axisY = rotation * new Vector3(0f, record.scale_1/10, 0f);
-        data.axisZ = rotation * new Vector3(0f, 0f, record.scale_2/10);
-        data.color = new Color((record.f_dc_0 / 4 + 0.5f), (record.f_dc_1 / 4 + 0.5f), (record.f_dc_2 / 4 + 0.5f), record.opacity);
+        data.axisX = rotation * new Vector3(data.scale.x, 0f, 0f);
+        data.axisY = rotation * new Vector3(0f, data.scale.y, 0f);
+        data.axisZ = rotation * new Vector3(0f, 0f, data.scale.z);
+        // data.color = new Color((record.f_dc_0 / 4 + 0.5f), (record.f_dc_1 / 4 + 0.5f), (record.f_dc_2 / 4 + 0.5f), record.opacity);
+        data.color = new Color(record.f_dc_0 * SPH_0 + 0.5f, record.f_dc_1 * SPH_0 + 0.5f, record.f_dc_2 * SPH_0 + 0.5f, 1 / (1 + Mathf.Exp(-record.opacity)));
         return data;
     }
 
