@@ -11,12 +11,14 @@ public class AKPyloader : ScriptableObject
 {
     public string plyFilePath = "Assets/yourfile.ply";
 
-    public List<InstaneData> instances;
+    public List<InstanceData> instances;
     private  int instanceCount  = 2000;
+
+    private static float SPH_0 = 0.2820948f;
 
     public void LoadAndCreateBuffer()
     {
-        instances = new List<InstaneData>(instanceCount);
+        instances = new List<InstanceData>(instanceCount);
         if (!File.Exists(plyFilePath))
         {
             Debug.LogError($"PLY file not found: {plyFilePath}");
@@ -35,19 +37,19 @@ public class AKPyloader : ScriptableObject
         ReadOnlySpan<SlimPlyData> records = MemoryMarshal.Cast<byte, SlimPlyData>( dataWihtOutHeaderBytes);
         foreach (var record in records)
         {
-            InstaneData data = parsePlyFileToInstance(record);
+            InstanceData data = parsePlyFileToInstance(record);
             instances.Add(data);
         }
 
         instances = instances.OrderBy(i => i.position.x).ToList();
     }
-    public  InstaneData parsePlyFileToInstance( SlimPlyData record)
+    public  InstanceData parsePlyFileToInstance( SlimPlyData record)
     {
-        InstaneData data = new InstaneData();
+        InstanceData data = new InstanceData();
         data.position = new Vector3(record.x,-record.y, record.z);
-        data.scale = new Vector3(record.scale_0/100, record.scale_1/100, record.scale_2/100);
+        data.scale = new Vector3(Mathf.Exp(record.scale_0), Mathf.Exp(record.scale_1), Mathf.Exp(record.scale_2)) * 4f;
         data.rotation = new Quaternion(record.rot_0, record.rot_1, record.rot_2, record.rot_3);
-        data.color = new Color((record.f_dc_0 / 4 + 0.5f), (record.f_dc_1 / 4 + 0.5f), (record.f_dc_2 / 4 + 0.5f), record.opacity);
+        data.color = new Color(record.f_dc_0 * SPH_0 + 0.5f, record.f_dc_1 * SPH_0 + 0.5f, record.f_dc_2 * SPH_0 + 0.5f, 1 / (1 + Mathf.Exp(-record.opacity)));
         return data;
     }
 
@@ -70,7 +72,7 @@ public class AKPyloader : ScriptableObject
         public float rot_0, rot_1, rot_2, rot_3;
     }
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct InstaneData
+    public struct InstanceData
     {
         public Vector3 position;
         public Vector3 scale;
