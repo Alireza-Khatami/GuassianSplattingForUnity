@@ -25,6 +25,7 @@ struct appdata
 struct v2fDepth
 {
     float4 vertex : SV_POSITION;
+    float4 color : COLOR;
 };
 
 struct v2fColor
@@ -93,6 +94,7 @@ v2fDepth vertDepth(appdata v)
     float3 worldPos = d.position + offset;
 
     v2fDepth o;
+    o.color = d.color;
     o.vertex = UnityObjectToClipPos(float4(worldPos, 1.0));
     return o;
 }

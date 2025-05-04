@@ -29,33 +29,67 @@ Shader "Custom/InstanceShader"
         }
         Pass
         {
-
-            Name "TransparentPass"
+            Name "DepthViewPass"
             ZWrite Off
             Cull Off
-            ZTest LEqual
+            ZTest Always
             Blend SrcAlpha OneMinusSrcAlpha
+
             CGPROGRAM
             #pragma vertex vertColor
-            #pragma fragment frag
+            #pragma fragment fragDepthView
             #pragma multi_compile_instancing
             #include "/InstanceSplatCommon.cginc"
-            sampler2D _MainTex;
-            fixed4 frag(v2fColor i) : SV_Target
+            #include "UnityCG.cginc"  // Needed for ComputeScreenPos and linear depth
+
+            sampler2D _CameraDepthTexture;
+
+            fixed4 fragDepthView(v2fColor i) : SV_Target
             {
-                float2 centerUV = (i.uv - 0.5) * 1.2f;
-                float distSq = dot(centerUV, centerUV);
-                float gaussian = exp(-distSq * 25.0f);
+                // Compute screen UVs
+                float4 screenPos = ComputeScreenPos(i.vertex);
+                float2 screenUV = screenPos.xy / screenPos.w;
 
-                // fixed4 texColor = fixed4(GammaToLinearSpace(i.color), 1);
-                fixed4 texColor = i.color;
-                texColor.a = gaussian;
+                // Sample the depth texture
+                float rawDepth = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV);
 
-                clip(texColor.a - 0.01);
-                return texColor;
+                // Convert to linear depth (0 = near, 1 = far)
+                float linearDepth = Linear01Depth(rawDepth);
+
+                // Visualize depth as grayscale
+                return fixed4(linearDepth, linearDepth, linearDepth, 1.0);
             }
             ENDCG
         }
+        // Pass
+        // {
+
+        //     Name "TransparentPass"
+        //     ZWrite Off
+        //     Cull Off
+        //     ZTest LEqual
+        //     Blend SrcAlpha OneMinusSrcAlpha
+        //     CGPROGRAM
+        //     #pragma vertex vertColor
+        //     #pragma fragment frag
+        //     #pragma multi_compile_instancing
+        //     #include "/InstanceSplatCommon.cginc"
+        //     sampler2D _MainTex;
+        //     fixed4 frag(v2fColor i) : SV_Target
+        //     {
+        //         float2 centerUV = (i.uv - 0.5) * 1.2f;
+        //         float distSq = dot(centerUV, centerUV);
+        //         float gaussian = exp(-distSq * 25.0f);
+
+        //         fixed4 texColor = fixed4(GammaToLinearSpace(i.color), 1);
+        //         fixed4 texColor = i.color;
+        //         texColor.a = gaussian;
+
+        //         clip(texColor.a - 0.01);
+        //         return texColor;
+        //     }
+        //     ENDCG
+        // }
     }
 }
 
