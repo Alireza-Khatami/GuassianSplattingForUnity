@@ -7,7 +7,7 @@ public class RenderPly : MonoBehaviour
 
     ComputeBuffer instanceBuffer;
     public Material instanceMaterial;
-    [SerializeField] private AKPyloader plyLoader;
+    [SerializeField] private PlyLoader plyLoader;
     private int instanceCount;
     public Mesh instanceMesh;
     void Start()

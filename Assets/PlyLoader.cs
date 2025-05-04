@@ -7,7 +7,7 @@ using System.Linq;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewMyData", menuName = "MyGame/MyData")]
-public class AKPyloader : ScriptableObject
+public class PlyLoader : ScriptableObject
 {
     public string plyFilePath = "Assets/yourfile.ply";
 
