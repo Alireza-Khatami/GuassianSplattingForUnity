@@ -47,12 +47,14 @@ public class AKPyloader : MonoBehaviour
     {
         InstaneData data = new InstaneData();
         data.position = new Vector3(record.x,-record.y, record.z);
-        data.scale = new Vector3(Mathf.Exp(record.scale_0), Mathf.Exp(record.scale_1), Mathf.Exp(record.scale_2));
-        var rotation = new Quaternion(record.rot_0, record.rot_1, record.rot_2, record.rot_3);
+        data.scale = new Vector3(Mathf.Abs(Mathf.Exp(record.scale_0)), Mathf.Abs(Mathf.Exp(record.scale_1)), Mathf.Abs(Mathf.Exp(record.scale_2)));
+
+        var rotBasis = new Vector4(record.rot_2, record.rot_1, record.rot_0, record.rot_3).normalized;
+        var rotation = new Quaternion(rotBasis.x, rotBasis.y, rotBasis.z, rotBasis.w);
         data.axisX = rotation * new Vector3(data.scale.x, 0f, 0f);
         data.axisY = rotation * new Vector3(0f, data.scale.y, 0f);
         data.axisZ = rotation * new Vector3(0f, 0f, data.scale.z);
-        // data.color = new Color((record.f_dc_0 / 4 + 0.5f), (record.f_dc_1 / 4 + 0.5f), (record.f_dc_2 / 4 + 0.5f), record.opacity);
+
         data.color = new Color(record.f_dc_0 * SPH_0 + 0.5f, record.f_dc_1 * SPH_0 + 0.5f, record.f_dc_2 * SPH_0 + 0.5f, 1 / (1 + Mathf.Exp(-record.opacity)));
         return data;
     }
