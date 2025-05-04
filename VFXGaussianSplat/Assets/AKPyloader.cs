@@ -48,7 +48,7 @@ public class AKPyloader : MonoBehaviour
         InstaneData data = new InstaneData();
         data.position = new Vector3(record.x,-record.y, record.z);
         data.scale = new Vector3(Mathf.Exp(record.scale_0), Mathf.Exp(record.scale_1), Mathf.Exp(record.scale_2));
-        var rotation = new Quaternion(record.rot_1, record.rot_2, record.rot_3, record.rot_0);
+        var rotation = new Quaternion(record.rot_0, record.rot_1, record.rot_2, record.rot_3);
         data.axisX = rotation * new Vector3(data.scale.x, 0f, 0f);
         data.axisY = rotation * new Vector3(0f, data.scale.y, 0f);
         data.axisZ = rotation * new Vector3(0f, 0f, data.scale.z);
