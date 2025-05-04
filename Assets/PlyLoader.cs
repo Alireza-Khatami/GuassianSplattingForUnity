@@ -7,16 +7,18 @@ using System.Linq;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewMyData", menuName = "MyGame/MyData")]
-public class AKPyloader : ScriptableObject
+public class PlyLoader : ScriptableObject
 {
     public string plyFilePath = "Assets/yourfile.ply";
 
-    public List<InstaneData> instances;
+    public List<InstanceData> instances;
     private  int instanceCount  = 2000;
+
+    private static float SPH_0 = 0.2820948f;
 
     public void LoadAndCreateBuffer()
     {
-        instances = new List<InstaneData>(instanceCount);
+        instances = new List<InstanceData>(instanceCount);
         if (!File.Exists(plyFilePath))
         {
             Debug.LogError($"PLY file not found: {plyFilePath}");
@@ -35,19 +37,63 @@ public class AKPyloader : ScriptableObject
         ReadOnlySpan<SlimPlyData> records = MemoryMarshal.Cast<byte, SlimPlyData>( dataWihtOutHeaderBytes);
         foreach (var record in records)
         {
-            InstaneData data = parsePlyFileToInstance(record);
+            InstanceData data = parsePlyFileToInstance(record);
             instances.Add(data);
         }
 
         instances = instances.OrderBy(i => i.position.x).ToList();
+        instanceCount = instances.Count;
     }
-    public  InstaneData parsePlyFileToInstance( SlimPlyData record)
+
+    public void FullySortInstances() {
+        if (instances == null) {
+            return;
+        }
+        var camera = Camera.main;
+        if (camera == null) {
+            return;
+        }
+
+        var camPosition = camera.transform.position;
+        instances.Sort((x, y) => Vector3.Distance(y.position, camPosition).CompareTo(Vector3.Distance(x.position, camPosition)));
+    }
+
+    public bool PartialSortInstances() {
+        if (instances == null) {
+            return false;
+        }
+        var camera = Camera.main;
+        if (camera == null) {
+            return false;
+        }
+
+        var camPosition = camera.transform.position;
+        bool modified = false;
+        int[] gaps = {701, 301, 132, 57, 23, 10, 4, 1};
+        foreach (int gap in gaps) {
+            for (int i = 0; i < instanceCount - gap; i += gap) {
+                if (Vector3.Distance(instances[i].position, camPosition) < Vector3.Distance(instances[i+gap].position, camPosition)) {
+                    var tmp = instances[i];
+                    instances[i] = instances[i+gap];
+                    instances[i+gap] = tmp;
+                    modified = true;
+                }
+            }
+        }
+
+        return modified;
+    }
+
+    public  InstanceData parsePlyFileToInstance( SlimPlyData record)
     {
-        InstaneData data = new InstaneData();
+        InstanceData data = new InstanceData();
         data.position = new Vector3(record.x,-record.y, record.z);
-        data.scale = new Vector3(record.scale_0/100, record.scale_1/100, record.scale_2/100);
-        data.rotation = new Quaternion(record.rot_0, record.rot_1, record.rot_2, record.rot_3);
-        data.color = new Color((record.f_dc_0 / 4 + 0.5f), (record.f_dc_1 / 4 + 0.5f), (record.f_dc_2 / 4 + 0.5f), record.opacity);
+        data.scale = new Vector3(Mathf.Exp(record.scale_0), Mathf.Exp(record.scale_1), Mathf.Exp(record.scale_2));
+        var rotation = new Quaternion(record.rot_0, record.rot_1, record.rot_2, record.rot_3);
+        data.axisX = rotation * new Vector3(data.scale.x, 0f, 0f);
+        data.axisY = rotation * new Vector3(0f, data.scale.y, 0f);
+        data.axisZ = rotation * new Vector3(0f, 0f, data.scale.z);
+        data.color = new Color(record.f_dc_0 * SPH_0 + 0.5f, record.f_dc_1 * SPH_0 + 0.5f, record.f_dc_2 * SPH_0 + 0.5f, 1 / (1 + Mathf.Exp(-record.opacity)));
         return data;
     }
 
@@ -70,11 +116,13 @@ public class AKPyloader : ScriptableObject
         public float rot_0, rot_1, rot_2, rot_3;
     }
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
-    public struct InstaneData
+    public struct InstanceData
     {
         public Vector3 position;
         public Vector3 scale;
-        public Quaternion rotation;
+        public Vector3 axisX;
+        public Vector3 axisY;
+        public Vector3 axisZ;
         public Color color;
     }
     int FindHeaderEndIndex(byte[] fileBytes)

@@ -5,7 +5,7 @@ using System.IO;
 using UnityEngine;
 using Unity.Collections;
 
-public class PlyLoader : MonoBehaviour
+public class DynamicPlyLoader : MonoBehaviour
 {
     public TextAsset plyFile;
     public string radienceFieldFile;

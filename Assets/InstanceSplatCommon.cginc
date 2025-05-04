@@ -7,7 +7,10 @@ struct InstanceData
 {
     float3 position;
     float3 scale;
-    float4 rotation;
+    // float4 rotation;
+    float3 axisX;
+    float3 axisY;
+    float3 axisZ;
     float4 color;
 };
 StructuredBuffer<InstanceData> _InstanceBuffer;
@@ -81,11 +84,10 @@ void SelectAxes(float3 X, float3 Y, float3 Z, out float3 x, out float3 y)
 v2fDepth vertDepth(appdata v)
 {
     InstanceData d = _InstanceBuffer[v.instanceID];
-    float3 X, Y, Z;
-    QuaternionToBasis(d.rotation, X, Y, Z);
+    float3 X = d.axisX, Y = d.axisY, Z = d.axisZ;
     float3 axis1, axis2;
     SelectAxes(X, Y, Z, axis1, axis2);
-    float3 tem = v.vertex*d.scale;
+    float3 tem = v.vertex * 4;
     float2 vtx = tem.xy;
     float3 offset = vtx.x * axis1 + vtx.y * axis2 ;
     float3 worldPos = d.position + offset;
@@ -99,11 +101,10 @@ v2fDepth vertDepth(appdata v)
 v2fColor vertColor(appdata v)
 {
     InstanceData d = _InstanceBuffer[v.instanceID];
-    float3 X, Y, Z;
-    QuaternionToBasis(d.rotation, X, Y, Z);
+    float3 X = d.axisX, Y = d.axisY, Z = d.axisZ;
     float3 axis1, axis2;
     SelectAxes(X, Y, Z, axis1, axis2);
-    float3 tem = v.vertex * d.scale;
+    float3 tem = v.vertex * 4;
     float2 vtx = tem.xy;
     float3 offset = vtx.x * axis1 + vtx.y * axis2 ;
     float3 worldPos = d.position + offset;

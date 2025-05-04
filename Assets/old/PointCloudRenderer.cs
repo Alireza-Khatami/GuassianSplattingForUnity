@@ -6,7 +6,7 @@ using System.Linq;
 public class PointCloudRenderer : MonoBehaviour
 {
     public Material material;
-    public PlyLoader pointCloudLoader;
+    public DynamicPlyLoader pointCloudLoader;
 
     private GraphicsBuffer vertBuffer;
     private GraphicsBuffer colorBuffer;
