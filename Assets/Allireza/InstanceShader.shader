@@ -6,7 +6,7 @@ Shader "Custom/InstanceShader"
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags { "RenderType"="Transparent" }
 
         // Pass 1: Depth Prepass (writes depth only)
         Pass
@@ -32,6 +32,7 @@ Shader "Custom/InstanceShader"
 
             Name "TransparentPass"
             ZWrite Off
+            Cull Off
             ZTest LEqual
             Blend SrcAlpha OneMinusSrcAlpha
             CGPROGRAM
@@ -46,6 +47,7 @@ Shader "Custom/InstanceShader"
                 float distSq = dot(centerUV, centerUV);
                 float gaussian = exp(-distSq * 25.0f);
 
+                // fixed4 texColor = fixed4(GammaToLinearSpace(i.color), 1);
                 fixed4 texColor = i.color;
                 texColor.a = gaussian;
 

@@ -1,3 +1,4 @@
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ public class RenderPly : MonoBehaviour
         if (instanceBuffer != null)
             instanceBuffer.Release();
 
-        instanceBuffer = new ComputeBuffer(instanceCount, sizeof(float) * (3 + 3 + 4 + 4));
+        instanceBuffer = new ComputeBuffer(instanceCount, sizeof(float) * (5*3 + 4));
         instanceBuffer.SetData(plyLoader.instances.ToArray());
         instanceMaterial.SetBuffer("_InstanceBuffer", instanceBuffer);
         Debug.Log($"Loaded {instanceCount} instances from PLY file.");
@@ -25,12 +26,16 @@ public class RenderPly : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        // Manually reorder splats by depth
+        if (Input.GetKeyDown(KeyCode.R)) {
+            plyLoader.FullySortInstances();
+            instanceBuffer.SetData(plyLoader.instances.ToArray());
+        }
         if (instanceBuffer != null && instanceCount > 0)
         {
             int increment = 3000000;
             for (int i = 0; i < instanceCount; i += increment)
             {
-                //instanceMaterial.SetInteger("_BaseIndex", i);
                 var matProps = new MaterialPropertyBlock();
                 matProps.SetInt("_BaseIndex", i);
 

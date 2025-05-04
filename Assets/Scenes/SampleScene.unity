@@ -129,7 +129,7 @@ GameObject:
   m_Component:
   - component: {fileID: 140238962}
   - component: {fileID: 140238961}
-  m_Layer: 0
+  m_Layer: 1
   m_Name: splatVisualizer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -275,6 +275,7 @@ GameObject:
   - component: {fileID: 963194227}
   - component: {fileID: 963194226}
   - component: {fileID: 963194229}
+  - component: {fileID: 963194230}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -371,6 +372,23 @@ MonoBehaviour:
   instanceMaterial: {fileID: 2100000, guid: 1d03f955eedb89d488eac40ae2a0c4ef, type: 2}
   plyLoader: {fileID: 11400000, guid: 3342d63426111f648b47a4740117cb76, type: 2}
   instanceMesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &963194230
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 963194225}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f706be77e2bd5648a878d2141f28c52, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  movementSpeed: 3
+  fastMovementSpeed: 30
+  freeLookSensitivity: 3
+  zoomSensitivity: 10
+  fastZoomSensitivity: 50
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
